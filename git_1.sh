@@ -26,6 +26,33 @@ git status -s
 
 git diff
 
+#  THESE COMMANDS ARE VERY IMPORTANT, RUN THESE ONES FIRST!!!
+#  First you have to do an initial commit and this will move the files from your computer to github
+#  Here you will also be asked the loggin and password
+
+git commit -m "initial commit"
+git push origin master
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 #Now that your staging area is set up the way you want it, you can commit your changes. Remember that anything that is still unstaged — any files you have created or modified that you haven’t run git add on since you edited them — won’t go into this commit. They will stay as modified files on your disk. In this case, let’s say that the last time you ran git status, you saw that everything was staged, so you’re ready to commit your changes. The simplest way to commit is to type git commit.
 
 
