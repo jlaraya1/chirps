@@ -1,0 +1,109 @@
+
+
+rm(list = ls())
+R.Version()
+
+
+selectSomeFiles<-function(files,init,fin,prefix,typeOfFile){
+  #####################################################
+  # This function allows you to extract some files
+  # after reading files=dir(). You have to provide
+  # the initial index (ini) and final index (fin)
+  # of the common prefix of the files you want to
+  #extract. "typeOfFile" allows you to enter the type
+  #of file (.txt,.pdf) that you are looking for...
+  #####################################################
+  e=substr(files,init,fin)
+  prefix=as.character(prefix)
+  typeOfFile=as.character(typeOfFile)
+  index=NULL
+  subfiles=NULL
+  for(i in seq(1,length(e))){if(e[i]==prefix){index=append(index,i)}}
+  subfiles=files[index]
+  ii=grep(typeOfFile,subfiles)
+  subfiles=subfiles[ii]
+  return(subfiles)}
+
+
+ruta<-"/home/jlaraya/chirps_data/converted2txt/"
+saveResultsHere="/home/jlaraya/chirps_data/joining_ts/"
+setwd(ruta)
+files=dir()
+
+station_coord_all=NULL
+for (i in seq(1, length(files))){ station_coord=strsplit(files[i],"_")  
+                                  lon=as.numeric(station_coord[[1]][4]);lat=as.numeric(station_coord[[1]][6]);year=as.numeric(strsplit(station_coord[[1]][8],".txt")[[1]][1])
+                                  station_coord2=as.matrix(cbind(lon,lat,year))
+                                  station_coord_all=rbind(station_coord_all,station_coord2)   }
+ 
+locations=as.data.frame(unique(subset(station_coord_all,select=lat:lon)))
+years=unique(subset(station_coord_all,select=year))
+write.table(locations,quote=FALSE,file=paste(saveResultsHere,"locations_CHIRPS_ts.txt",sep=""),row.names=T,col.names=T)   
+write.table(years,quote=FALSE,file=paste(saveResultsHere,"years_CHIRPS_ts.txt",sep=""),row.names=T,col.names=T) 
+
+
+#mapeamos estas estaciones a ver cómo se ve:
+library(maps)
+library(mapdata)
+library(fields)
+data(worldMapEnv)
+
+png(paste(saveResultsHere,"mapasCHIRPS2",".png",sep=""))
+map('world',xlim=c(min(locations$lon)-2,max(locations$lon)+2),ylim=c(min(locations$lat)-2,max(locations$lat)+2),boundary=TRUE, fill=TRUE,col="yellow")
+points(as.numeric(as.character(locations$lon)), as.numeric(as.character(locations$lat)), pch=16, col="red", cex=0.3) 
+map.axes(cex.axis=0.6)
+title("Series de tiempo CHIRPS usadas para el territorio nacional")
+dev.off() 
+
+############################################################################################################
+#prueba de consistencia de los archivos: deben de tener todos un unico año,si todo está bien: archRaros=NULL
+archRaros=NULL
+dimeAll=NULL
+ts_all=NULL
+
+for(i in seq(1,length(files))){a=read.table(files[i],header=TRUE)
+                               if ((max(a$year>min(a$year)))){archRaros=append(archRaros,files[i])}
+                               dime=cbind(longitud=a$lon[1],latitud=a$lat[1],No_fil=dim(a)[1],No_col=dime[2],mx_prec=max(a$prec,na.rm=TRUE),mn_prec=min(a$prec,na.rm=TRUE),percentage_NA=100*sum(is.na(a$prec)*1)/nrow(a))
+                               dimeAll=rbind(dimeAll,dime)
+                               }
+
+dimeAll=as.data.frame(dimeAll)
+write.table(archRaros,quote=FALSE,file=paste(saveResultsHere,"archRaros.txt",sep=""),row.names=T,col.names=T) 
+write.table(dimeAll,quote=FALSE,file=paste(saveResultsHere,"estadisticas.txt",sep=""),row.names=T,col.names=T) 
+
+
+#unificar los archivos con las mismas coordenadas...
+tablaAll=NULL
+for(i in seq(1,length(files))){a=read.table(files[i],header=TRUE)
+                               lon=as.numeric(strsplit(files[i],"_")[[1]][4]);lat=as.numeric(strsplit(files[i],"_")[[1]][6])
+                               tabla=cbind(i,lon,lat);tablaAll=rbind(tablaAll,tabla)
+                               }
+
+#El siguiente algoritmo concatena los archivo bajo uno solo con continuidad para cada uno de los puntos geográficos:
+tablaAll=as.data.frame(tablaAll)
+soloCoord=as.data.frame(unique(subset(tablaAll,select=c("lon","lat"))))   # las coordenadas no repetidas
+write.table(tablaAll,quote=FALSE,file=paste(saveResultsHere,"coord_todas.txt",sep=""),row.names=T,col.names=T) 
+write.table(soloCoord,quote=FALSE,file=paste(saveResultsHere,"coord_no_repetidas.txt",sep=""),row.names=T,col.names=T) 
+
+for(i in seq(1,nrow(soloCoord))){indices= which(soloCoord$lon[i]==tablaAll$lon & soloCoord$lat[i]==tablaAll$lat )
+                                 files2=files[indices]
+                                 tsAll=NULL
+                                 for(ii in seq(1,length(files2))){  ts= read.table(files2[ii],header=TRUE)
+                                                                     tsAll=rbind(tsAll,ts)          }
+ 
+                                 ts_file=paste("precDia_CHIRPS_lon_",ts$lon[1],"_lat_",ts$lat[1],".txt",sep="")
+                                 write.table(tsAll,quote=FALSE,file=paste(saveResultsHere,ts_file,sep=""),row.names=T,col.names=T) 
+                                 write.table(files2,quote=FALSE,file=paste(saveResultsHere,"groups_",ts_file,sep=""),row.names=T,col.names=T) 
+                                 }
+
+
+
+
+
+
+
+
+
+
+
+

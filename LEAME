@@ -1,0 +1,67 @@
+###################################################################
+CHIRPS_data: Descarga y procesamiento de datos del proyecto CHIRPS
+Programado por: josé Luis Araya López, PhD.
+Contacto: jlaraya1@gmail.com
+##################################################################
+Fecha de última actualización de este archivo: 29/8/2019
+##################################################################
+
+
+Aplicación para extracción de información meteorológica del proyecto 
+CHIRPS: Rainfall Estimates from Rain Gauge and Satellite Observations 
+
+https://www.chc.ucsb.edu/data/chirps//
+
+"Since 1999, USGS and CHC scientists—supported by funding from USAID, NASA, and NOAA—have developed techniques for producing rainfall maps,
+ especially in areas where surface data is sparse.
+
+Estimating rainfall variations in space and time is a key aspect of drought early warning and environmental monitoring. 
+An evolving drier-than-normal season must be placed in a historical context so that the severity of rainfall deficits
+can be quickly evaluated. However, estimates derived from satellite data provide areal averages that suffer from biases
+due to complex terrain, which often underestimate the intensity of extreme precipitation events. Conversely, precipitation
+grids produced from station data suffer in more rural regions where there are less rain-gauge stations. CHIRPS was created
+in collaboration with scientists at the USGS Earth Resources Observation and Science (EROS) Center in order to deliver
+complete, reliable, up-to-date data sets for a number of early warning objectives, like trend analysis and seasonal 
+drought monitoring."
+
+
+Esta es una aplicación que he venido desarrollando para la descarga y procesamiento de los datos
+de precipitación CHIRPS, los cuales se encuentran en el sitio Web
+
+ftp://chg-ftpout.geog.ucsb.edu/pub/org/chg/products/CHIRPS-2.0/global_daily/netcdf/p05/chirps-v2.0.1981.days_p05.nc
+
+
+########################################################################################################
+ORDEN DE CARPETAS DE ESTA APLICACIÓN
+#########################################################################################################
+
+CHIRPS_data--->code               se almacenan los scripts de la aplicación
+- -  -    ---->netcdf_original    se almacenan los datos descargados del link oficial.
+- -  --------->convert2txt        se extraen las series de tiempo en formato .txt de los archivos netcdf.
+- ------------>joining_ts         se extaen los archivos de las sefies de la carpeta "convert2txt" y se 
+                                  convierten a una serie temporal unificada. 
+-------------->documentation      Documentación anexa relevante. 
+=========================================================================================================
+
+
+La lista de programas incluye:
+#######################################################################################################
+ORDEN         SCRIPT                 DESCRIPCIÓN
+#######################################################################################################
+1          bajar_chirps.sh              Descarga automatizada de los archivos Netcdf del link anterior
+=======================================================================================================
+2          loadingData_v(...).R         Este script extrae las series de tiempo horarias de los archivos 
+                                        Netcdf y los almacena en la carpeta convert2txt  
+=======================================================================================================
+3          mappingCHIRPS_ts.R           Algunas visualizaciones preliminares de los datos. Este script 
+                                        permitevisualizar los puntos geográficos de cada una de las series
+                                        temporales usando los script "loadingData_v(...)R"           
+=======================================================================================================
+4  Concatenate_generate_groups_chirps(..).R    Esta función genera una serie de resultados a partir de 
+                                               los archivos de datos CHIRPS que se encuentran la carpeta
+                                               "convert2txt" y almacena los resultados en la carpeta
+                                               "joinin_ts". En esta carpeta se muestan las series de 
+                                               tiempo con los datos ordenados cronologicamente durante
+                                               todo el registro histórico provisto por CHIRPS.    
+=======================================================================================================
+
