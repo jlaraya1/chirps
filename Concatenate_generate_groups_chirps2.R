@@ -12,6 +12,73 @@ library(fields)
 data(worldMapEnv)
 ##################
 
+datosFaltantes <- function(codDatoFaltante,datos) {
+  #codDatoFaltante: el numero usando como representación del dato faltante en el
+  #vector columna analizado (ej. -9,-99,etc)
+  #datos: vector columna al cual se va a reemplazar por NA los datos codificados 
+  #como faltantes
+  i<-which(datos==codDatoFaltante)
+  datos<-replace(datos,i,NA) 
+  datos<-datos
+}
+reporte <- function(archivo,reso,resol,ruta,calculo,prefijo,diviHora,tipoRep) {
+  ##################################################################
+  #archivo: archivo al que se le calculará el reporte
+  #resol: resolución del reporte: "month", "day"
+  #reso: resolución de los datos originales
+  #ruta: ruta del directorio donde se almacenan los resultados
+  #calculo: "promedio", "total"  o   "moda"  según corresponda
+  #encab: encabezado de los datos
+  #prefijo: un prefijo identificador del archivo, para saber que es
+  #tipoRep: "todo" y se imprimen todas las columnas. resumido" y se imprimen solo una parte
+  ##################################################################
+  #datos<-read.table(archivo,sep="",fill=TRUE,blank.lines.skip=TRUE,header=T)
+  datos<-read.table(archivo,sep="",fill=TRUE,blank.lines.skip=TRUE,header=T,row.names=NULL)
+  names(datos)=c("CONT","LON","LAT","DIA","MES","AGNO","DATOS")
+  
+  datos$DATOS<-datosFaltantes(-9999,datos$DATOS)
+
+   #Procedo a ordenar por fechas crecientes:
+   datosFechas<-paste(as.character(datos$AGNO),"-",as.character(datos$MES),"-",as.character(datos$DIA),"-",as.character(0),"-00-00")
+   datosFechas <- ymd_hms(datosFechas)
+
+   redond<-floor_date(datosFechas,reso)
+   datos<-data.frame(cbind(redond,datos))
+   datos<- datos[order(datos$redond),]
+   datos$redond<-floor_date(datos$redond,resol)
+  #write.table(datos,quote=FALSE,file=paste(ruta,calculo,"datosOrdenados",archivo), col.names = TRUE, row.names = FALSE) 
+  if(tolower(calculo)=="promedio"){ reporteDia<-ddply(datos,"redond", summarise,LONGIUTD = max(LON,na.rm = TRUE),LATITUD = max(LAT,na.rm = TRUE),DATOS2 = mean(DATOS,na.rm = TRUE),MAX = max(DATOS,na.rm = TRUE),MIN = min(DATOS,na.rm = TRUE),TotDatSinNA  =length(na.omit(DATOS)),TotDat =length(DATOS),.progress="text") }
+  if(tolower(calculo)=="total")   { reporteDia<-ddply(datos,"redond", summarise, LONGITUD = max(LON,na.rm = TRUE),LATITUD = max(LAT,na.rm = TRUE),DATOS2 = sum(DATOS,na.rm = TRUE) , TotDatSinNA =length(na.omit(DATOS)),TotDat =length(DATOS),.progress="text") }
+  if(tolower(calculo)=="moda")    { reporteDia<-ddply(datos,"redond", summarise, DATOS2 = Mode(DIR,na.rm = FALSE),.progress = "text")   }    
+  reporteDia$DATOS3<- elimPorcNanes(reporteDia$DATOS2,reporteDia$TotDatSinNA,reporteDia$TotDat,70) 
+  if(tolower(tipoRep)=="resumido")   { reporteDia=subset(reporteDia,select=c("redond","CUENCA","ESTACION","DATOS3")) }
+  write.table(reporteDia,quote=FALSE,file=paste(ruta,calculo,prefijo,archivo,sep="-"), col.names = TRUE, row.names = FALSE) 
+  
+  #plot(reporteDia$DATOS3,type="l",pch=19,col="red",cex=0.5,xlab="Contador",ylab="magnitud")
+  #title(archivo)
+  
+  print(head(reporteDia))
+  reporteDia<-reporteDia
+}
+
+
+reportesD_Q_M_Y<- function(lista,opcion,reso,resol,guardeEn,Calculo,prefijoDia,tipoRep) {
+  #función para generar reportes diarios, 
+  #opcion= 1,2,etc
+  #rutaDia <-"../resultadosDay/"
+  #prefijoDia=c("tempAutoWeek-","HRAutoWeek-","lluvAutoWeek-")
+  #resol<-"day";diviHora<-1
+  #Calculo= "promedio"
+  opcion=as.numeric(opcion)
+  diviHora=1
+  for(j in 1:length(prefijoDia)){
+    for (i in 1:length(lista)) {rep <-reporte(lista[i],reso,resol,guardeEn,Calculo,prefijoDia,diviHora,tipoRep)  }    }
+  
+  
+}
+
+
+
 
 selectSomeFiles<-function(files,init,fin,prefix,typeOfFile){
   #####################################################
@@ -118,10 +185,62 @@ files=dir()
 joinData(ruta,files,saveResultsHere)
 
 
+#revisando las dimensiones de los archivos unidos:
+ruta<-"../joining_ts/"
+setwd(ruta)
+files=dir()
+files2=selectSomeFiles(files,1,7,"precDia",".txt")
+
+dimAll=NULL
+for(i in seq(1,length(files2))){ 
+  inicio=paste(dat$day[1],dat$month[1],dat$year[1],sep="-")
+  final=paste(dat$day[nrow(dat)],dat$month[nrow(dat)],dat$year[nrow(dat)],sep="-")
+  dat=read.table(files2[i],header=TRUE)
+  dimen=cbind(archivo=files2[i],nFil=nrow(dat),nCol=ncol(dat),inicio,final)
+  dimAll=rbind(dimAll,dimen)
+
+}
+
+dimAll=as.data.frame(dimAll)
+#rownames(dimAll)=NULL; names(dimAll)=c("file","nFil","nCol")
+#dimAll$nFil=as.numeric(dimAll$nFil);dimAll$nCol=as.numeric(dimAll$nCol)
+write.table(dimAll,quote=FALSE,file="dimension_files",row.names=T,col.names=T) 
 
 
 
+#Generación de reportes mensuales y anuales:
+#source("/home/jlaraya/Documents/BaseEspejo/codigo/funciones.R")
 
+#################################################
+#Cálculo de totales mensuales de precipitación
+#################################################
+#################
+#import Libraries
+library("plyr")
+library("lubridate")
+################
+opcion=4
+Calculo= "total"
+guardeEn <-"../resumen_mes/"
+prefijo="mensual-"
+reso<-"day"
+resol<-"month"
+tipoRep<-"todo"
+reportesD_Q_M_Y(files2,opcion,reso,resol,guardeEn,Calculo,prefijo,tipoRep)
 
+################
+opcion=4
+Calculo= "total"
+guardeEn <-"../resumen_agno/"
+prefijo="mensual-"
+reso<-"day"
+resol<-"month"
+tipoRep<-"todo"
+reportesD_Q_M_Y(files2,opcion,reso,resol,guardeEn,Calculo,prefijo,tipoRep)
 
+#################
+guardeEn <-"../resumen_agno/"
+prefijo="anual-"
+resol<-"year"
+reportesD_Q_M_Y(files2,opcion,reso,resol,guardeEn,Calculo,prefijo,tipoRep)
 

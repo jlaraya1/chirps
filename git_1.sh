@@ -53,42 +53,4 @@ git push origin master
 
 
 
-#Now that your staging area is set up the way you want it, you can commit your changes. Remember that anything that is still unstaged — any files you have created or modified that you haven’t run git add on since you edited them — won’t go into this commit. They will stay as modified files on your disk. In this case, let’s say that the last time you ran git status, you saw that everything was staged, so you’re ready to commit your changes. The simplest way to commit is to type git commit.
-
-
-#Adding the -a option to the git commit command makes Git automatically stage every file that is already tracked before doing the commit, letting you skip the git add part:
-
-git commit -a -m 'added new benchmarks'
-
-touch readME.md   #this is to create an initial file to push
-git commit -m "enter commit message here"
-
-
-git status
-git push -f origin master
-git pull
-git remote add origin https://github.com/jlaraya1/chirps_data.git
-git push -u origin master
-
-git diff
-
-
-
-
-git remote set-url --push https://github.com/jlaraya1/chirps.git
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
