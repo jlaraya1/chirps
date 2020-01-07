@@ -18,13 +18,7 @@ sessionInfo()
 # tuve que instalar desde la shell lo siguiente
 # sudo apt-get install libudunits2-dev
 # para poder instalar las librerias de netcdf
-##############
-#CORRECCIONES
-##############
-# En la versión 3 noto que varios archivos de salida se pasan del año del que deberían corresponder (por un día o más). Por
-# ejemplo si es 1980 y la fecha inicia el 1/1/1980 veo que en algunos casos se pasa hasta el 1/1/1981, lo cual no es deseable
-# que suceda. Aquí introduzco unas modificaciones en el cálculo del eje de tiempo...en vez de usar la magnitud de prec como 
-# contador uso la variable time y restrinjo prec al tamaño de time.
+
 
 ##############
 #R packages
