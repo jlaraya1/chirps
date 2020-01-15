@@ -1,5 +1,5 @@
 #!/bin/bash
- # This is a comment 
+ 
 
 echo "Bajando los archivos CHIRPS solicitados, por favor espere..." 
 
